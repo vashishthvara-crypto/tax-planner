@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CA Inter Tax Dashboard by Vashishth Vara</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f1f5f9; }
+        .checkbox-custom { width: 22px; height: 22px; cursor: pointer; accent-color: #3b82f6; }
+        .completed-row { background-color: #ecfdf5; color: #065f46; transition: 0.3s; text-decoration: line-through; opacity: 0.8; }
+        .tab-active { border-bottom: 4px solid #2563eb; color: #1e3a8a; font-weight: bold; }
+        .tab-inactive { color: #64748b; }
+        .fade-in { animation: fadeIn 0.4s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <div class="bg-white rounded-t-xl shadow-md p-6 border-b-4 border-blue-600 flex flex-col md:flex-row justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-extrabold text-gray-800">CA Inter Taxation <span class="text-blue-600">(Paper 3)</span></h1>
+                <p class="text-sm font-semibold text-gray-500 mt-1 uppercase tracking-wide">Developed by Vashishth Vara</p>
+            </div>
+            
+            <div class="mt-4 md:mt-0 bg-red-50 border border-red-200 rounded-lg p-3 text-center min-w-[200px] shadow-sm">
+                <p class="text-xs text-red-600 font-bold uppercase mb-1"><i class="fas fa-clock"></i> Target Exam</p>
+                <div class="text-2xl font-black text-red-700" id="countdown">Calculating...</div>
+            </div>
+        </div>
+
+        <div id="main-dashboard-view" class="bg-white rounded-b-xl shadow-md p-6 mb-8 fade-in">
+            
+            <div class="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-100">
+                <div class="flex justify-between mb-2">
+                    <span class="text-sm font-bold text-gray-700">Overall Syllabus Completion (DT + IDT)</span>
+                    <span class="text-sm font-bold text-blue-700" id="main-progress-text">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3">
+                    <div class="bg-blue-600 h-3 rounded-full transition-all duration-500" id="main-progress-bar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex space-x-6 border-b border-gray-200 w-2/3">
+                    <button onclick="switchTab('dt')" id="tab-dt" class="pb-2 px-2 text-lg tab-active focus:outline-none"><i class="fas fa-file-invoice-dollar"></i> Income Tax (50M)</button>
+                    <button onclick="switchTab('idt')" id="tab-idt" class="pb-2 px-2 text-lg tab-inactive focus:outline-none"><i class="fas fa-shopping-cart"></i> GST (50M)</button>
+                </div>
+                <button onclick="toggleViews()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-colors flex items-center">
+                    <i class="fas fa-bolt mr-2"></i> Important Sections Page
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-800 text-white">
+                            <th class="p-3 border rounded-tl-lg">Chapter Name</th>
+                            <th class="p-3 border text-center"><i class="fas fa-hourglass-half"></i> Rev 1 Target</th>
+                            <th class="p-3 border text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="syllabus-body">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="imp-sections-view" class="bg-white rounded-xl shadow-md p-6 mb-8 hidden fade-in">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <h2 class="text-2xl font-bold text-purple-800"><i class="fas fa-star text-yellow-500"></i> Critical Sections Master-List</h2>
+                <button onclick="toggleViews()" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+                </button>
+            </div>
+
+            <div class="mb-6">
+                <div class="flex justify-between mb-2">
+                    <span class="text-sm font-bold text-purple-700">Important Sections Mastered</span>
+                    <span class="text-sm font-bold text-purple-700" id="imp-progress-text">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-4">
+                    <div class="bg-purple-600 h-4 rounded-full transition-all duration-500" id="imp-progress-bar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="imp-cards-container">
+                </div>
+        </div>
+
+    </div>
+
+    <script>
+        // SYLLABUS DATA
+        const dtData = [
+            { id: "dt1", name: "Basic Concepts & Tax Rates", hours: "2 Hours", imp: "Sec 4, 115BAC, 288A/B, Surcharge rates" },
+            { id: "dt2", name: "Residential Status", hours: "3 Hours", imp: "Sec 6(1), 6(1A), 6(6), Sec 9" },
+            { id: "dt3", name: "Salaries", hours: "6 Hours", imp: "Sec 10(13A), 10(10AA), 16(ia), Perquisites valuation" },
+            { id: "dt4", name: "House Property", hours: "3 Hours", imp: "Sec 23, Sec 24(a)/(b)" },
+            { id: "dt5", name: "PGBP", hours: "10 Hours", imp: "Sec 32, 40(a)(ia), 43B, 44AA, 44AB, 44AD/ADA" },
+            { id: "dt6", name: "Capital Gains", hours: "8 Hours", imp: "Sec 45, 50C, 54, 54EC, 54F, 112A" },
+            { id: "dt7", name: "Income from Other Sources", hours: "2 Hours", imp: "Sec 56(2)(x), 57, 58" },
+            { id: "dt8", name: "Set-off & Carry Forward", hours: "3 Hours", imp: "Sec 70, 71, 71B, 72, 73, 74" },
+            { id: "dt9", name: "Deductions (Chapter VI-A)", hours: "4 Hours", imp: "80C, 80D, 80G, 80JJAA, 80TTA/TTB" },
+            { id: "dt10", name: "TDS, TCS & Advance Tax", hours: "6 Hours", imp: "192, 194C, 194J, 194Q, 206C(1H)" },
+            { id: "dt11", name: "Filing of Return (ITR)", hours: "3 Hours", imp: "139(1), 139(4), 139(5), 139(8A), 140" }
+        ];
+
+        const idtData = [
+            { id: "idt1", name: "GST Basics & Definitions", hours: "2 Hours", imp: "Sec 2(17), 2(31), 2(107)" },
+            { id: "idt2", name: "Concept of Supply", hours: "4 Hours", imp: "Sec 7, Schedule I, II, III, Sec 8" },
+            { id: "idt3", name: "Charge of GST (RCM)", hours: "3 Hours", imp: "Sec 9(3), 9(4), 9(5)" },
+            { id: "idt4", name: "Exemptions from GST", hours: "5 Hours", imp: "Services Notification 12/2017" },
+            { id: "idt5", name: "Time of Supply", hours: "3 Hours", imp: "Sec 12, Sec 13, Sec 14" },
+            { id: "idt6", name: "Value of Supply", hours: "3 Hours", imp: "Sec 15, Rule 27 to 33" },
+            { id: "idt7", name: "Input Tax Credit (ITC)", hours: "8 Hours", imp: "Sec 16, 17(5) Blocked Credit, Sec 18" },
+            { id: "idt8", name: "Registration", hours: "4 Hours", imp: "Sec 22, 24 (Mandatory), Sec 25" },
+            { id: "idt9", name: "Tax Invoice, Credit/Debit Notes", hours: "3 Hours", imp: "Sec 31, 34, E-invoicing rules" },
+            { id: "idt10", name: "Payment of Tax & Returns", hours: "3 Hours", imp: "Sec 49, 50 (Interest), GSTR 1 & 3B" }
+        ];
+
+        let currentTab = 'dt';
+        const allData = [...dtData, ...idtData];
+
+        // RENDER MAIN TABLE
+        function renderTable(data) {
+            const tbody = document.getElementById('syllabus-body');
+            tbody.innerHTML = '';
+            
+            data.forEach(item => {
+                const isChecked = localStorage.getItem(`main-${item.id}`) === 'true' ? 'checked' : '';
+                const rowClass = isChecked ? 'completed-row' : 'hover:bg-gray-50';
+                
+                const tr = document.createElement('tr');
+                tr.className = `border-b ${rowClass}`;
+                tr.innerHTML = `
+                    <td class="p-3 border font-semibold text-gray-800">${item.name}</td>
+                    <td class="p-3 border text-center font-bold text-red-500">${item.hours}</td>
+                    <td class="p-3 border text-center">
+                        <input type="checkbox" class="checkbox-custom main-chk" data-id="${item.id}" ${isChecked} onchange="handleMainCheck(this)">
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // RENDER IMPORTANT SECTIONS PAGE
+        function renderImpSections() {
+            const container = document.getElementById('imp-cards-container');
+            container.innerHTML = '';
+
+            allData.forEach(item => {
+                const isChecked = localStorage.getItem(`imp-${item.id}`) === 'true' ? 'checked' : '';
+                const tagColor = item.id.includes('dt') ? 'bg-blue-100 text-blue-800 border-blue-200' : 'bg-green-100 text-green-800 border-green-200';
+                
+                const card = document.createElement('div');
+                card.className = `p-4 border rounded-lg shadow-sm flex flex-col justify-between ${isChecked ? 'bg-gray-50 opacity-60' : 'bg-white'}`;
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-xs font-bold px-2 py-1 rounded border ${tagColor}">${item.id.includes('dt') ? 'Income Tax' : 'GST'}</span>
+                            <input type="checkbox" class="checkbox-custom imp-chk" data-id="${item.id}" ${isChecked} onchange="handleImpCheck(this)">
+                        </div>
+                        <h3 class="font-bold text-gray-800 mb-1">${item.name}</h3>
+                        <p class="text-sm font-semibold text-purple-700 bg-purple-50 p-2 rounded border border-purple-100">
+                            <i class="fas fa-bookmark mr-1"></i> ${item.imp}
+                        </p>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            updateImpProgress();
+        }
+
+        // EVENT HANDLERS
+        function handleMainCheck(checkbox) {
+            localStorage.setItem(`main-${checkbox.dataset.id}`, checkbox.checked);
+            updateMainProgress();
+            renderTable(currentTab === 'dt' ? dtData : idtData); // Re-render to apply strikethrough class
+        }
+
+        function handleImpCheck(checkbox) {
+            localStorage.setItem(`imp-${checkbox.dataset.id}`, checkbox.checked);
+            renderImpSections(); // Re-render to apply opacity
+        }
+
+        // PROGRESS CALCULATIONS
+        function updateMainProgress() {
+            const total = allData.length;
+            const checkedCount = allData.filter(item => localStorage.getItem(`main-${item.id}`) === 'true').length;
+            const pct = Math.round((checkedCount / total) * 100) || 0;
+            document.getElementById('main-progress-bar').style.width = `${pct}%`;
+            document.getElementById('main-progress-text').innerText = `${pct}%`;
+        }
+
+        function updateImpProgress() {
+            const total = allData.length;
+            const checkedCount = allData.filter(item => localStorage.getItem(`imp-${item.id}`) === 'true').length;
+            const pct = Math.round((checkedCount / total) * 100) || 0;
+            document.getElementById('imp-progress-bar').style.width = `${pct}%`;
+            document.getElementById('imp-progress-text').innerText = `${pct}%`;
+        }
+
+        // TAB SWITCHING
+        function switchTab(tab) {
+            currentTab = tab;
+            const dtBtn = document.getElementById('tab-dt');
+            const idtBtn = document.getElementById('tab-idt');
+            
+            if(tab === 'dt') {
+                dtBtn.className = "pb-2 px-2 text-lg tab-active focus:outline-none";
+                idtBtn.className = "pb-2 px-2 text-lg tab-inactive focus:outline-none";
+                renderTable(dtData);
+            } else {
+                idtBtn.className = "pb-2 px-2 text-lg tab-active border-green-600 focus:outline-none";
+                idtBtn.style.color = '#166534'; // Dark green
+                dtBtn.className = "pb-2 px-2 text-lg tab-inactive focus:outline-none";
+                dtBtn.style.color = '#64748b'; 
+                renderTable(idtData);
+            }
+        }
+
+        // VIEW TOGGLING (Dashboard vs Imp Sections)
+        function toggleViews() {
+            const mainView = document.getElementById('main-dashboard-view');
+            const impView = document.getElementById('imp-sections-view');
+            
+            if (mainView.classList.contains('hidden')) {
+                mainView.classList.remove('hidden');
+                impView.classList.add('hidden');
+                updateMainProgress(); // Refresh progress when coming back
+            } else {
+                mainView.classList.add('hidden');
+                impView.classList.remove('hidden');
+                renderImpSections(); // Refresh sections
+            }
+        }
+
+        // EXAM COUNTDOWN
+        function setupCountdown() {
+            // CHANGE YOUR EXAM DATE HERE (Format: 'YYYY-MM-DD')
+            const examDate = new Date('2027-05-15T00:00:00').getTime(); 
+            
+            const timer = setInterval(function() {
+                const now = new Date().getTime();
+                const distance = examDate - now;
+                
+                if (distance < 0) {
+                    clearInterval(timer);
+                    document.getElementById("countdown").innerHTML = "EXAM DAY!";
+                    return;
+                }
+                
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                document.getElementById("countdown").innerHTML = days + " Days";
+            }, 1000);
+        }
+
+        // INITIALIZATION
+        window.onload = () => {
+            switchTab('dt');
+            updateMainProgress();
+            setupCountdown();
+        };
+    </script>
+</body>
+</html>
